@@ -1,4 +1,122 @@
-package pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.repository.omisos.impl;
+server:
+  applicationConnectors:
+    - type: http
+      port: 7362
+  adminConnectors:
+    - type: http
+      port: 17362
+  requestLog:
+    appenders: [ ]
+serviceName: migeigv-libros-cargaConveniosTributarios-batch
+
+# -------------------------------------------
+# Configuraciones para mongodb
+# -------------------------------------------
+mongodb:
+  conexiones:
+  - credenciales:
+      usuario: "uslibroselectroncon"
+      clave: "clave20"
+    dsname: "dcbdlibroselectronicos"
+    nodos:
+      - host: "mdbcpesspp0.sunat.peru"
+        port: 27017
+      - host: "mdbcpesspp1.sunat.peru"
+        port: 27018
+      - host: "mdbcpesspp2.sunat.peru"
+        port: 27019
+    database: "bdLibrosElectronicos"
+    replicaset: "cpessppRs0"
+    readpreference: "primary"
+    writeconcern: "w1"
+    poolconfig:
+      maxPoolSize: 200
+      minPoolSize: 0
+    pojos:
+      - "pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain"
+  - credenciales:
+      usuario: "uslibroselectronope"
+      clave: "clave20"
+    dsname: "dgbdlibroselectronicos"
+    nodos:
+      - host: "mdbcpesspp0.sunat.peru"
+        port: 27017
+      - host: "mdbcpesspp1.sunat.peru"
+        port: 27018
+      - host: "mdbcpesspp2.sunat.peru"
+        port: 27019
+    database: "bdLibrosElectronicos"
+    replicaset: "cpessppRs0"
+    readpreference: "primary"
+    writeconcern: "w1"
+    poolconfig:
+      maxPoolSize: 200
+      minPoolSize: 0
+    pojos:
+      - "pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain"
+  - credenciales:
+      usuario: "usrheparametroscon"
+      clave: "clave20"
+    dsname: "dcbdrheparametros"
+    nodos:
+      - host: "mdbcpesspp0.sunat.peru"
+        port: 27017
+      - host: "mdbcpesspp0.sunat.peru"
+        port: 27018
+      - host: "mdbcpesspp0.sunat.peru"
+        port: 27019
+    database: "bdRheParametros"
+    replicaset: "rentaRs0"
+    readpreference: "primary"
+    writeconcern: "w1"
+    poolconfig:
+      maxPoolSize: 200
+      minPoolSize: 0
+    pojos:
+      - "pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain"
+
+#kafka
+kafkaConsumer:
+  kafkaHealthCheck: true
+  topic: iidr.recauda.informix.t335cabcon-json
+  topicR: iidr.recauda.informix.t335cabcon-json-R
+  bootstrap_server: 172.18.1.20:9092, 172.18.1.21:9092, 172.18.1.22:9092
+  consumerGroup: group-iidr.recauda.informix.t335cabcon-json
+
+# -------------------------------------------
+# Configuraciones para este microservicio
+# -------------------------------------------
+logging:
+  level: INFO
+  loggers:
+    io.dropwizard: INFO
+    org.eclipse: INFO
+    org.hibernate: INFO
+    org.apache.camel: INFO
+    com.mchange: INFO
+    com.netflix: INFO
+    org.jboss.weld.Version: INFO
+    org.jboss.weld: INFO
+    io.dropwizard.jersey.DropwizardResourceConfig: INFO
+    io.dropwizard.server.ServerFactory: INFO
+    org.glassfish.jersey.server.ServerRuntime: FATAL
+    org.jboss.weld.environment.servlet.logging: INFO
+    com.atomikos.jdbc.AtomikosConnectionProxy: ERROR
+    com.circulosiete.metrics.health.hystrix: INFO
+    org.apache.kafka: INFO
+    org.mongodb: INFO
+    pe.gob.sunat: DEBUG
+  appenders:
+    - type: console
+      timeZone: EST
+    - type: logstash-tcp
+      host: logstash-logforwarder
+      port: 9210
+      timeZone: EST
+      includeCallerData: true
+      includeMdc: true
+      includeContext: true
+      includeCallerInfo: truepackage pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.repository.omisos.impl;
 
 import java.util.Arrays;
 import java.util.Collections;
