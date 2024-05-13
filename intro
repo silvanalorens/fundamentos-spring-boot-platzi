@@ -1,0 +1,196 @@
+package pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.repository.omisos.impl;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.Updates;
+
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain.Auditoria;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain.omisos.Convenio;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain.omisos.ConveniosTributarios;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.domain.omisos.Tributo;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.repository.impl.LibroAbstractRepositoryImpl;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.repository.omisos.ConveniosTributariosRepository;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.basebdmigelibro.util.BaseMigeLibrosConstantes;
+import pe.gob.sunat.contribuyentems.registro.migeigv.libros.migelibro.annotation.LibroApp;
+import pe.gob.sunat.tecnologiams.arquitectura.framework.microservices.util.UtilLog;
+
+public class ConveniosTributariosRepositoryImpl extends LibroAbstractRepositoryImpl<ConveniosTributarios> implements ConveniosTributariosRepository {
+
+    @Inject
+    @LibroApp
+    private UtilLog utilLog;
+
+
+    ConveniosTributariosRepositoryImpl() {
+        DS_ESCRITURA = BaseMigeLibrosConstantes.DS_DGBDLIBROSELECTRONICOS;
+        DS_LECTURA = BaseMigeLibrosConstantes.DS_DCBDLIBROSELECTRONICOS;
+        COLLECTION_NAME = BaseMigeLibrosConstantes.COLLECTION_CONVENIOS_TRIBUTARIOS;
+    }
+
+    @Override
+    public Class<ConveniosTributarios> provideEntityClass() {
+        return ConveniosTributarios.class;
+    }
+
+    @Override
+    public ConveniosTributarios consultarConveniosTributarios(String numRuc, String codDependencia) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc),
+                Filters.eq("codDependencia", codDependencia)
+        );
+        
+        return getCollectionReadWithCodecs().find(queryFiltros, ConveniosTributarios.class).first();
+    }
+
+    public ConveniosTributarios consultarConveniosTributariosByRUC(String numRuc) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc)
+        );
+        
+        return getCollectionReadWithCodecs().find(queryFiltros, ConveniosTributarios.class).first();
+    }
+    @Override
+    public Convenio obtieneConvenio(String numRuc, String codConvenio) {
+        Document fields = new Document();
+        return getCollectionReadWithCodecs().find(
+                Filters.and(
+                        Filters.eq("numRuc", numRuc),
+                        Filters.elemMatch("lisConvenio", Filters.eq("codConvenio", codConvenio))
+                ), Convenio.class
+        ).first();
+    }
+    @Override
+    public ConveniosTributarios insertarConveniosTributarios(ConveniosTributarios conveniosTributarios) {
+        getCollectionWriteWithCodecs().insertOne(conveniosTributarios);
+        return conveniosTributarios;
+    }
+
+    public long actualizarConvenioTributario(ConveniosTributarios param ){
+        //MongoCollection<ConveniosTributarios> colleccion = MongoDBClient.getCollection(DS_ESCRITURA, COLLECTION, ConveniosTributarios.class);
+        Bson filter = Filters.and(
+                Filters.eq("numRuc", param.getNumRuc()),
+                Filters.eq("codDependencia", param.getCodDependencia())
+        );
+        return  getCollectionWriteWithCodecs().replaceOne(filter, param, new ReplaceOptions().upsert(false)).getModifiedCount();
+    }
+
+    @Override
+    public long actualizaListadoConvenios(String numRuc, String codDependencia, Auditoria auditoria, List<Convenio> lisConvenio) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc)
+        );
+        Bson queryUpdate = Updates.combine(
+                Updates.pushEach("lisConvenio", lisConvenio),
+                Updates.set("codDependencia", codDependencia),
+                Updates.set("auditoria",auditoria )
+        );
+        return getCollectionWriteWithCodecs().updateOne(queryFiltros, queryUpdate, new UpdateOptions()).getMatchedCount();
+    }
+
+    @Override
+    public long modificaConvenioExistente(String numRuc, String codDependencia, Auditoria auditoria, Convenio datoConvenio) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc)
+        );
+        Bson queryUpdate = Updates.combine(
+                Updates.set("codDependencia", codDependencia),
+                Updates.set("auditoria",auditoria ),
+                Updates.set("lisConvenio.$[x].indEstado", datoConvenio.getIndEstado()),
+                Updates.set("lisConvenio.$[x].desDispositivoConvenio", datoConvenio.getDesDispositivoConvenio()),
+                Updates.set("lisConvenio.$[x].fecPromulgacion", datoConvenio.getFecPromulgacion()),
+                Updates.set("lisConvenio.$[x].fecInicioConvenio", datoConvenio.getFecFinConvenio()),
+                Updates.set("lisConvenio.$[x].fecFinConvenio", datoConvenio.getFecFinConvenio()),
+                Updates.set("lisConvenio.$[x].indReinversionUtilidades", datoConvenio.getIndReinversionUtilidades()),
+                Updates.set("lisConvenio.$[x].indMotivoRenuncia", datoConvenio.getIndMotivoRenuncia()),
+                Updates.set("lisConvenio.$[x].codTipoConvenio", datoConvenio.getCodTipoConvenio()),
+                Updates.set("lisConvenio.$[x].indContabilidad", datoConvenio.getIndContabilidad()),
+                Updates.set("lisConvenio.$[x].codMoneda", datoConvenio.getCodMoneda()),
+                //Updates.set("lisConvenio.$[x].desMoneda", datoConvenio.getDesMoneda()),
+                Updates.set("lisConvenio.$[x].auditoria", datoConvenio.getAuditoria())
+        );
+
+        Bson queryArrayFilters = Filters.and(
+                Filters.eq("x.codConvenio", datoConvenio.getCodConvenio())
+        );
+
+        return getCollectionWriteWithCodecs().updateOne(queryFiltros, queryUpdate, new UpdateOptions()
+                .arrayFilters(Collections.singletonList(queryArrayFilters))).getMatchedCount();
+    }
+    @Override
+    public long eliminarConvenioLista(String numRuc, String codDependencia, Convenio datoConvenio, Auditoria auditoria) {
+        Document queryFiltros = new Document().append("numRuc", numRuc).append("codDependencia", codDependencia);
+        Bson queryArrayFilters = new Document().append("lisConvenio",
+                new Document().append( "codConvenio",datoConvenio.getCodConvenio()));
+        Bson queryUpdate = Updates.combine(
+                Updates.set("auditoria", auditoria ),
+                new Document("$pull",queryArrayFilters)
+        );
+
+        return getCollectionWriteWithCodecs().updateMany(queryFiltros, queryUpdate, new UpdateOptions()).getMatchedCount();
+    }
+
+    @Override
+    public long eliminarConveniosTributariosByRucCodDep(String numRuc, String codDependencia) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc),
+                Filters.eq("codDependencia", codDependencia)
+        );
+        
+        return getCollectionWriteWithCodecs().deleteMany(queryFiltros).getDeletedCount();
+    }
+
+    @Override
+    public long actualizaListadoTributos(String numRuc, String codConvenio, List<Tributo> lisTributo, Auditoria audiConvenio, Auditoria audiGeneral) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc)
+        );
+        Bson queryUpdate = Updates.combine(
+                Updates.set("auditoria", audiGeneral ),
+                Updates.pushEach("lisConvenio.$[x].lisTributo", lisTributo),
+                Updates.set("lisConvenio.$[x].auditoria", audiConvenio)
+        );
+        Bson queryArrayFilters = Filters.and(
+                Filters.eq("x.codConvenio", codConvenio)
+        );
+        return getCollectionWriteWithCodecs().updateOne(queryFiltros, queryUpdate, new UpdateOptions()
+                .arrayFilters(Collections.singletonList(queryArrayFilters))).getMatchedCount();
+    }
+
+    public long modificaTributoExistente(String numRuc, String codConvenio, Tributo tributo, Auditoria audiConvenio, Auditoria audiGeneral) {
+        Bson queryFiltros = Filters.and(
+                Filters.eq("numRuc", numRuc)
+        );
+        Bson queryUpdate = Updates.combine(
+                Updates.set("auditoria", audiGeneral ),
+                Updates.set("lisConvenio.$[x].auditoria", audiConvenio),
+                Updates.set("lisConvenio.$[x].lisTributo.$[y].indMarcaExoneracion", tributo.getIndMarcaExoneracion()),
+                //Updates.set("lisConvenio.$[x].lisTributo.$[y].porTasa", tributo.getPorTasa()),
+                Updates.set("lisConvenio.$[x].lisTributo.$[y].auditoria.codUsuModif", tributo.getAuditoria().getCodUsuModif()),
+                Updates.set("lisConvenio.$[x].lisTributo.$[y].auditoria.fecModif", tributo.getAuditoria().getFecModif())
+        );
+
+        Bson queryx = Filters.and(
+                Filters.eq("x.codConvenio", codConvenio));
+        Bson queryy = Filters.and(
+                Filters.eq("y.codTributo", tributo.getCodTributo()),
+                Filters.eq("y.porTasa", tributo.getPorTasa())
+        );
+        List<Bson> queryArrayFilters = Arrays.asList( queryx,queryy);
+
+        return getCollectionWriteWithCodecs().updateOne(queryFiltros, queryUpdate, new UpdateOptions()
+                .arrayFilters(queryArrayFilters)).getMatchedCount();
+    }
+
+
+
+}
