@@ -48,6 +48,27 @@ function functionformatJson() {
     }'
 }
 
+# Función para formatear la auditoría en JSON
+function functionformatAuditoriaJson() {
+    local userNa="$1"
+    local fecAct="$2"
+
+    # Formatea las fechas usando la función functionformatDateJson
+    local fecActJson=$(functionformatDateJson "$fecAct")
+
+    # Formatea los valores según el formato deseado
+    echo '{
+        "codUsuRegis": "'"$userNa"'",
+        "fecRegis": {
+            '"$(functionformatDateJson "$fecAct")"'
+        },
+        "codUsuModif": "'"$userNa"'",
+        "fecModif": {
+            '"$(functionformatDateJson "$fecAct")"'
+        }
+    }'
+}
+
 function functionformatDateJson() {
     local fecha="$1"
     local fechaUTC=$(date -u -d "$fecha" +"%Y-%m-%dT%H:%M:%S%:z")
@@ -164,8 +185,10 @@ while IFS='|' read -r numRucDetalle codConDetalle codTriDetalle tasaDetalle marE
 done < "$input_det_file"
 
 listTributo="$listTributo]"
-
+  auditoriaItem=$(functionformatAuditoriaJson "$userNa" "$fecAct")
 itemConvenio="$itemConvenio $listTributo}"
+
+# probar itemConvenio="$itemConvenio $listTributo $auditoriaitem}"
 
 if [[ $first -ne 1 ]]; then
     echo "    ,"
